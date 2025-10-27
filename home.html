@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>應買股數計算器</title>
+  <title>應買股數與倉位佔比計算器</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -27,8 +27,8 @@
     }
     .container {
       width: 100%;
-      max-width: 560px;
-      background: rgba(17, 24, 39, 0.8);
+      max-width: 720px;
+      background: rgba(17, 24, 39, 0.86);
       backdrop-filter: blur(8px);
       border: 1px solid var(--border);
       border-radius: 14px;
@@ -48,16 +48,22 @@
       font-size: 14px;
       line-height: 1.5;
     }
+    .section-title {
+      margin: 18px 0 10px;
+      font-size: 14px;
+      color: #cbd5e1;
+      border-left: 3px solid #334155;
+      padding-left: 8px;
+    }
     .grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 12px;
     }
-    @media (min-width: 520px) {
-      .grid {
-        grid-template-columns: 1fr 1fr;
-      }
-      .grid > .full { grid-column: 1 / -1; }
+    @media (min-width: 640px) {
+      .grid.two { grid-template-columns: 1fr 1fr; }
+      .grid.three { grid-template-columns: 1fr 1fr 1fr; }
+      .full { grid-column: 1 / -1; }
     }
     label {
       font-size: 13px;
@@ -84,6 +90,7 @@
       gap: 10px;
       margin-top: 6px;
       flex-wrap: wrap;
+      align-items: center;
     }
     button {
       appearance: none;
@@ -103,31 +110,46 @@
       color: var(--text);
       border: 1px solid var(--border);
     }
+    .btn-link {
+      background: transparent;
+      color: #86efac;
+      padding: 0;
+      border: 0;
+      text-decoration: underline;
+      font-weight: 600;
+    }
     .error {
       color: var(--danger);
       font-size: 13px;
-      margin-top: 8px;
       min-height: 18px;
     }
-    .result {
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
       margin-top: 14px;
+    }
+    @media (min-width: 640px) {
+      .cards { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
       background: #0b1020;
       border: 1px dashed #223;
       border-radius: 12px;
       padding: 14px;
     }
-    .result h3 {
+    .card h3 {
       margin: 0 0 8px;
       font-size: 16px;
     }
-    .result .row {
+    .row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 8px 0;
       border-top: 1px dashed #1f2937;
     }
-    .result .row:first-of-type { border-top: 0; }
+    .row:first-of-type { border-top: 0; }
     .value {
       font-weight: 700;
       color: #a7f3d0;
@@ -145,103 +167,208 @@
 </head>
 <body>
   <div class="container">
-    <h1>應買股數計算器</h1>
-    <p class="desc">公式：應買股數 = 止蝕資金 ÷（現價 − 止蝕價）。輸入數值後點「計算」，可得出應買股數與相應所需資金。</p>
+    <h1>應買股數與倉位佔比計算器</h1>
+    <p class="desc">
+      應買股數 = 止蝕資金 ÷（現價 − 止蝕價）；
+      倉位佔比 = Maximum drawdown ÷ 止蝕%。止蝕% 以百分比輸入（例如 2 代表 2%）。
+    </p>
 
-    <div class="grid">
+    <div class="section-title">風險與倉位參數</div>
+    <div class="grid three">
       <div>
-        <label for="stopLossFund">止蝕資金（元）</label>
-        <input type="number" id="stopLossFund" placeholder="例如：1000" inputmode="decimal" step="any" min="0" />
+        <label for="accountEquity">資金基數（可選，用於金額換算、元）</label>
+        <input type="number" id="accountEquity" placeholder="例如：100000" inputmode="decimal" step="any" min="0">
       </div>
       <div>
-        <label for="currentPrice">現價（每股元）</label>
-        <input type="number" id="currentPrice" placeholder="例如：50.5" inputmode="decimal" step="any" min="0" />
+        <label for="maxDD">Maximum drawdown（元）</label>
+        <input type="number" id="maxDD" placeholder="例如：5000" inputmode="decimal" step="any" min="0">
       </div>
       <div>
-        <label for="stopLossPrice">止蝕價（每股元）</label>
-        <input type="number" id="stopLossPrice" placeholder="例如：48" inputmode="decimal" step="any" min="0" />
-      </div>
-      <div class="full actions">
-        <button class="btn-primary" id="calcBtn">計算</button>
-        <button class="btn-ghost" id="clearBtn" type="button">清除</button>
-        <span class="error" id="errorMsg"></span>
+        <label for="stopPct">止蝕%（百分比，例：2 表示 2%）</label>
+        <input type="number" id="stopPct" placeholder="例如：2" inputmode="decimal" step="any" min="0">
       </div>
     </div>
 
-    <div class="result" id="resultBox" hidden>
-      <h3>計算結果</h3>
-      <div class="row">
-        <span>應買股數</span>
-        <span class="value" id="shareCount">—</span>
-      </div>
-      <div class="row">
-        <span>相應所需資金</span>
-        <span class="value" id="requiredCapital">—</span>
-      </div>
-      <div class="tip">注意：結果未考慮交易手續費、最小交易單位或稅費。</div>
+    <div class="actions">
+      <button class="btn-primary" id="calcPositionBtn">計算倉位佔比</button>
+      <button class="btn-ghost" id="clearPositionBtn" type="button">清除</button>
+      <span class="error" id="posError"></span>
     </div>
 
+    <div class="cards">
+      <div class="card" id="positionCard" hidden>
+        <h3>倉位結果</h3>
+        <div class="row">
+          <span>倉位佔比</span>
+          <span class="value" id="positionPct">—</span>
+        </div>
+        <div class="row">
+          <span>對應倉位金額</span>
+          <span class="value" id="positionAmt">—</span>
+        </div>
+        <div class="tip">若需用此金額作為風險資金，點擊下面按鈕自動帶入。</div>
+        <button class="btn-link" id="useAsStopFundBtn" type="button">用「對應倉位金額」帶入止蝕資金</button>
+      </div>
+
+      <div class="card">
+        <h3>應買股數計算</h3>
+        <div class="grid two">
+          <div>
+            <label for="stopLossFund">止蝕資金（元）</label>
+            <input type="number" id="stopLossFund" placeholder="例如：1000" inputmode="decimal" step="any" min="0" />
+          </div>
+          <div>
+            <label for="currentPrice">現價（每股元）</label>
+            <input type="number" id="currentPrice" placeholder="例如：50.5" inputmode="decimal" step="any" min="0" />
+          </div>
+          <div>
+            <label for="stopLossPrice">止蝕價（每股元）</label>
+            <input type="number" id="stopLossPrice" placeholder="例如：48" inputmode="decimal" step="any" min="0" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-primary" id="calcSharesBtn">計算股數</button>
+          <button class="btn-ghost" id="clearSharesBtn" type="button">清除</button>
+          <span class="error" id="shareError"></span>
+        </div>
+        <div class="row">
+          <span>應買股數</span>
+          <span class="value" id="shareCount">—</span>
+        </div>
+        <div class="row">
+          <span>相應所需資金</span>
+          <span class="value" id="requiredCapital">—</span>
+        </div>
+        <div class="tip">結果未計入手續費、稅費、最小交易單位等。</div>
+      </div>
+    </div>
   </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const fmt = (n, decimals = 2) =>
-      isFinite(n) ? Number(n).toLocaleString('zh-HK', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : '—';
+    const fmt = (n, d = 2) => isFinite(n) ? Number(n).toLocaleString('zh-HK', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
+    const fmtPct = (n, d = 2) => isFinite(n) ? `${(n*100).toFixed(d)}%` : '—';
 
-    function calculate() {
+    // 倉位佔比：pos = maxDD / stopPct
+    // 注意：stopPct 以百分比輸入，需要轉為比例，例如 2% -> 0.02
+    function calcPosition() {
+      const equity = parseFloat($('accountEquity').value); // optional
+      const maxDD = parseFloat($('maxDD').value);
+      const stopPctInput = parseFloat($('stopPct').value);
+
+      $('posError').textContent = '';
+
+      if ([maxDD, stopPctInput].some(v => isNaN(v))) {
+        $('posError').textContent = '請輸入 Maximum drawdown 與 止蝕%。';
+        $('positionCard').hidden = true;
+        return;
+      }
+      if (maxDD < 0) {
+        $('posError').textContent = 'Maximum drawdown 不能為負數。';
+        $('positionCard').hidden = true;
+        return;
+      }
+      if (stopPctInput <= 0) {
+        $('posError').textContent = '止蝕% 必須大於 0。';
+        $('positionCard').hidden = true;
+        return;
+      }
+
+      const stopPct = stopPctInput / 100; // 轉為小數
+      const positionRatio = maxDD / (stopPct * (isNaN(equity) || equity <= 0 ? 1 : equity)); 
+      // 上式解釋：
+      // 倉位佔比 = (可承受虧損金額) / (倉位虧損 = 倉位金額 × 止蝕%)
+      // 若提供資金基數 equity，倉位金額 = 倉位佔比 × equity
+      // 因此倉位佔比 = maxDD / (stopPct × equity)
+      // 若未提供 equity，就假設 equity = 1，只回傳比例本身相對於 1 的倉位佔比
+
+      const equityForCalc = (isNaN(equity) || equity <= 0) ? undefined : equity;
+      const positionAmount = equityForCalc ? positionRatio * equityForCalc : (maxDD / stopPct); 
+      // 若沒有 equity，positionAmount 代表理論上需要的倉位金額（相對 1 的倍數）
+
+      $('positionPct').textContent = isFinite(positionRatio) ? fmtPct(positionRatio, 2) : '—';
+      $('positionAmt').textContent = isFinite(positionAmount) ? `${fmt(positionAmount, 2)} 元` : '—';
+      $('positionCard').hidden = false;
+    }
+
+    function clearPosition() {
+      ['accountEquity','maxDD','stopPct'].forEach(id => $(id).value = '');
+      $('posError').textContent = '';
+      $('positionCard').hidden = true;
+      $('positionPct').textContent = '—';
+      $('positionAmt').textContent = '—';
+    }
+
+    function calcShares() {
       const stopLossFund = parseFloat($('stopLossFund').value);
       const currentPrice = parseFloat($('currentPrice').value);
       const stopLossPrice = parseFloat($('stopLossPrice').value);
 
-      $('errorMsg').textContent = '';
+      $('shareError').textContent = '';
 
       if ([stopLossFund, currentPrice, stopLossPrice].some(v => isNaN(v))) {
-        $('errorMsg').textContent = '請輸入所有數值。';
-        $('resultBox').hidden = true;
+        $('shareError').textContent = '請輸入所有數值。';
+        $('shareCount').textContent = '—';
+        $('requiredCapital').textContent = '—';
         return;
       }
       if (stopLossFund <= 0) {
-        $('errorMsg').textContent = '止蝕資金必須大於 0。';
-        $('resultBox').hidden = true;
+        $('shareError').textContent = '止蝕資金必須大於 0。';
+        $('shareCount').textContent = '—';
+        $('requiredCapital').textContent = '—';
         return;
       }
       if (currentPrice <= 0 || stopLossPrice < 0) {
-        $('errorMsg').textContent = '價格需為非負數且現價需大於 0。';
-        $('resultBox').hidden = true;
+        $('shareError').textContent = '價格需為非負數且現價需大於 0。';
+        $('shareCount').textContent = '—';
+        $('requiredCapital').textContent = '—';
         return;
       }
       if (currentPrice <= stopLossPrice) {
-        $('errorMsg').textContent = '現價必須大於止蝕價。';
-        $('resultBox').hidden = true;
+        $('shareError').textContent = '現價必須大於止蝕價。';
+        $('shareCount').textContent = '—';
+        $('requiredCapital').textContent = '—';
         return;
       }
 
       const shareCount = stopLossFund / (currentPrice - stopLossPrice);
       const requiredCapital = shareCount * currentPrice;
 
-      $('shareCount').textContent = fmt(shareCount, 2) + ' 股';
-      $('requiredCapital').textContent = fmt(requiredCapital, 2) + ' 元';
-      $('resultBox').hidden = false;
+      $('shareCount').textContent = `${fmt(shareCount, 2)} 股`;
+      $('requiredCapital').textContent = `${fmt(requiredCapital, 2)} 元`;
     }
 
-    function clearAll() {
-      ['stopLossFund', 'currentPrice', 'stopLossPrice'].forEach(id => $(id).value = '');
-      $('errorMsg').textContent = '';
-      $('resultBox').hidden = true;
+    function clearShares() {
+      ['stopLossFund','currentPrice','stopLossPrice'].forEach(id => $(id).value = '');
+      $('shareError').textContent = '';
       $('shareCount').textContent = '—';
       $('requiredCapital').textContent = '—';
-      $('stopLossFund').focus();
     }
 
-    $('calcBtn').addEventListener('click', calculate);
-    $('clearBtn').addEventListener('click', clearAll);
+    // 把倉位金額帶入止蝕資金
+    function usePositionAsStopFund() {
+      const txt = $('positionAmt').textContent.replace(/[^\d.-]/g, '');
+      const val = parseFloat(txt);
+      if (isFinite(val) && val > 0) {
+        $('stopLossFund').value = val.toString();
+        // 捷徑：帶入後自動計算股數（如果價格信息已填）
+        calcShares();
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
+    }
 
-    // 按 Enter 直接計算
-    ['stopLossFund', 'currentPrice', 'stopLossPrice'].forEach(id => {
-      $(id).addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') calculate();
-      });
-    });
+    $('calcPositionBtn').addEventListener('click', calcPosition);
+    $('clearPositionBtn').addEventListener('click', clearPosition);
+    $('calcSharesBtn').addEventListener('click', calcShares);
+    $('clearSharesBtn').addEventListener('click', clearShares);
+    $('useAsStopFundBtn').addEventListener('click', usePositionAsStopFund);
+
+    // Enter 鍵快捷計算
+    ['accountEquity','maxDD','stopPct','stopLossFund','currentPrice','stopLossPrice']
+      .forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') {
+        if (['accountEquity','maxDD','stopPct'].includes(id)) calcPosition();
+        else calcShares();
+      }}));
   </script>
 </body>
 </html>
