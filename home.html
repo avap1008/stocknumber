@@ -1,8 +1,6 @@
-<!DOCTYPE html>
-<html lang="zh-HK">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+<!DOCTYPE html><html lang="zh-HK"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>應買股數與倉位佔比計算器</title>
   <style>
     :root {
@@ -164,7 +162,7 @@
       color: var(--muted);
     }
   </style>
-</head>
+<script src="https://puc.poecdn.net/authenticated_preview_page/syncedState.3f7572448765332f3047.js"></script></head>
 <body>
   <div class="container">
     <h1>應買股數與倉位佔比計算器</h1>
@@ -196,7 +194,7 @@
     </div>
 
     <div class="cards">
-      <div class="card" id="positionCard" hidden>
+      <div class="card" id="positionCard" hidden="">
         <h3>倉位結果</h3>
         <div class="row">
           <span>倉位佔比</span>
@@ -215,15 +213,15 @@
         <div class="grid two">
           <div>
             <label for="stopLossFund">止蝕資金（元）</label>
-            <input type="number" id="stopLossFund" placeholder="例如：1000" inputmode="decimal" step="any" min="0" />
+            <input type="number" id="stopLossFund" placeholder="例如：1000" inputmode="decimal" step="any" min="0">
           </div>
           <div>
             <label for="currentPrice">現價（每股元）</label>
-            <input type="number" id="currentPrice" placeholder="例如：50.5" inputmode="decimal" step="any" min="0" />
+            <input type="number" id="currentPrice" placeholder="例如：50.5" inputmode="decimal" step="any" min="0">
           </div>
           <div>
             <label for="stopLossPrice">止蝕價（每股元）</label>
-            <input type="number" id="stopLossPrice" placeholder="例如：48" inputmode="decimal" step="any" min="0" />
+            <input type="number" id="stopLossPrice" placeholder="例如：48" inputmode="decimal" step="any" min="0">
           </div>
         </div>
         <div class="actions">
@@ -370,5 +368,6 @@
         else calcShares();
       }}));
   </script>
-</body>
-</html>
+
+
+</body></html>
