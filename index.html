@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>應買股數計算器</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "PingFang HK", "Microsoft JhengHei", Arial, sans-serif;
+      background: linear-gradient(135deg, #0b1220, #0f172a 40%, #0b1220);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 560px;
+      background: rgba(17, 24, 39, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    p.desc {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 520px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .grid > .full { grid-column: 1 / -1; }
+    }
+    label {
+      font-size: 13px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 12px;
+      background: #0b1020;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus {
+      border-color: #334155;
+      box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.35);
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    button {
+      appearance: none;
+      border: 0;
+      padding: 12px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #06120a;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .error {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+    .result {
+      margin-top: 14px;
+      background: #0b1020;
+      border: 1px dashed #223;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .result h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .result .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-top: 1px dashed #1f2937;
+    }
+    .result .row:first-of-type { border-top: 0; }
+    .value {
+      font-weight: 700;
+      color: #a7f3d0;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .tip {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>應買股數計算器</h1>
+    <p class="desc">公式：應買股數 = 止蝕資金 ÷（現價 − 止蝕價）。輸入數值後點「計算」，可得出應買股數與相應所需資金。</p>
+
+    <div class="grid">
+      <div>
+        <label for="stopLossFund">止蝕資金（元）</label>
+        <input type="number" id="stopLossFund" placeholder="例如：1000" inputmode="decimal" step="any" min="0" />
+      </div>
+      <div>
+        <label for="currentPrice">現價（每股元）</label>
+        <input type="number" id="currentPrice" placeholder="例如：50.5" inputmode="decimal" step="any" min="0" />
+      </div>
+      <div>
+        <label for="stopLossPrice">止蝕價（每股元）</label>
+        <input type="number" id="stopLossPrice" placeholder="例如：48" inputmode="decimal" step="any" min="0" />
+      </div>
+      <div class="full actions">
+        <button class="btn-primary" id="calcBtn">計算</button>
+        <button class="btn-ghost" id="clearBtn" type="button">清除</button>
+        <span class="error" id="errorMsg"></span>
+      </div>
+    </div>
+
+    <div class="result" id="resultBox" hidden>
+      <h3>計算結果</h3>
+      <div class="row">
+        <span>應買股數</span>
+        <span class="value" id="shareCount">—</span>
+      </div>
+      <div class="row">
+        <span>相應所需資金</span>
+        <span class="value" id="requiredCapital">—</span>
+      </div>
+      <div class="tip">注意：結果未考慮交易手續費、最小交易單位或稅費。</div>
+    </div>
+
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmt = (n, decimals = 2) =>
+      isFinite(n) ? Number(n).toLocaleString('zh-HK', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : '—';
+
+    function calculate() {
+      const stopLossFund = parseFloat($('stopLossFund').value);
+      const currentPrice = parseFloat($('currentPrice').value);
+      const stopLossPrice = parseFloat($('stopLossPrice').value);
+
+      $('errorMsg').textContent = '';
+
+      if ([stopLossFund, currentPrice, stopLossPrice].some(v => isNaN(v))) {
+        $('errorMsg').textContent = '請輸入所有數值。';
+        $('resultBox').hidden = true;
+        return;
+      }
+      if (stopLossFund <= 0) {
+        $('errorMsg').textContent = '止蝕資金必須大於 0。';
+        $('resultBox').hidden = true;
+        return;
+      }
+      if (currentPrice <= 0 || stopLossPrice < 0) {
+        $('errorMsg').textContent = '價格需為非負數且現價需大於 0。';
+        $('resultBox').hidden = true;
+        return;
+      }
+      if (currentPrice <= stopLossPrice) {
+        $('errorMsg').textContent = '現價必須大於止蝕價。';
+        $('resultBox').hidden = true;
+        return;
+      }
+
+      const shareCount = stopLossFund / (currentPrice - stopLossPrice);
+      const requiredCapital = shareCount * currentPrice;
+
+      $('shareCount').textContent = fmt(shareCount, 2) + ' 股';
+      $('requiredCapital').textContent = fmt(requiredCapital, 2) + ' 元';
+      $('resultBox').hidden = false;
+    }
+
+    function clearAll() {
+      ['stopLossFund', 'currentPrice', 'stopLossPrice'].forEach(id => $(id).value = '');
+      $('errorMsg').textContent = '';
+      $('resultBox').hidden = true;
+      $('shareCount').textContent = '—';
+      $('requiredCapital').textContent = '—';
+      $('stopLossFund').focus();
+    }
+
+    $('calcBtn').addEventListener('click', calculate);
+    $('clearBtn').addEventListener('click', clearAll);
+
+    // 按 Enter 直接計算
+    ['stopLossFund', 'currentPrice', 'stopLossPrice'].forEach(id => {
+      $(id).addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') calculate();
+      });
+    });
+  </script>
+</body>
+</html>
